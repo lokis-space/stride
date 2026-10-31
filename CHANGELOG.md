@@ -2,6 +2,19 @@
 
 Newest first. Each version is one commit on `main` (v20 onward). `sw.js` cache name and the footer always carry the same version.
 
+## v31 (31 Oct 2026) - Rest pill, week dots, session time
+- Rest pill: floating `Rest m:ss` above the nav, counts UP from the last logged set (no countdown, so extra rest shows). Red from 2:00. Hidden with no sets, after Finish, on other tabs, or after 30 min.
+- Week dots under the Workout header: one dot per session done this week (Mon start) + a Run dot.
+- Finish toast shows session length: `Lower A finished · 62 min · next Upper A`.
+- Toast moved up to sit above the pill. No vibration (iOS Safari has none) and no iOS timer.
+- Tests: version bump, added `test_v31_rest_pill_week_dots_finish_time`.
+
+## v30 (31 Oct 2026) - AI tip removed, Reverse Fly back
+- Removed the AI coach tip (card, session payload, `stride.tip`). Cloud backup on Finish and Restore from cloud stay as they were.
+- Worker source (`~/Downloads/stride-worker`): AI call, `AI_KEY` use and `STRIDE_MODEL` var removed. It now only stores and returns the backup. Needs `wrangler deploy`; the old live Worker still works because the app no longer sends a session.
+- Upper B: DB Rear Delt Raise swapped to Reverse Fly (machine #11, fixed), 2 x 15-20, start 15 kg, step 5. `pv<25` migration swaps it only if unedited.
+- Tests: version bump, pv 25, added `test_v30_no_ai_tip_and_reverse_fly_migrates`.
+
 ## v29 (23 Oct 2026) - Cloud backup + coach tip
 - Finish now sends the whole DB to the `stride-coach` Cloudflare Worker (`https://stride-coach.lokis-space.workers.dev`). It overwrites one cloud copy (Workers KV, key `latest`), so backups never pile up.
 - Same call asks the AI (Kaleris gateway, `STRIDE_MODEL`, default `gpt-6-sol`) for a 2-4 line tip from today's sets, notes and the last same session. Shows as a card on Lift, dismiss with ✕.

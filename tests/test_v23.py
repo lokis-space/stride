@@ -20,7 +20,7 @@ def names(d, ses):
 def test_fresh_install_has_new_order_and_plan(br):
     ctx, pg = page_with(br)
     d = pg.evaluate("freshDB()")
-    assert_(d["order"] == NEW_ORDER and d["pv"] == 24, d["order"])
+    assert_(d["order"] == NEW_ORDER and d["pv"] == 25, d["order"])
     assert_("DB Glute Bridge" not in names(d, "Lower B"), names(d, "Lower B"))
     for s in ["Upper A", "Upper B"]:
         assert_({"Wrist Curl", "Reverse Wrist Curl"} <= set(names(d, s)), (s, names(d, s)))
@@ -45,7 +45,7 @@ def test_plan_targets_match_agreed_plan(br):
 def test_v22_phone_data_migrates_once_and_keeps_history(br):
     ctx, pg = page_with(br, EXPORT)
     d = db(pg)
-    assert_(d["order"] == NEW_ORDER and d["pv"] == 24, d["order"])
+    assert_(d["order"] == NEW_ORDER and d["pv"] == 25, d["order"])
     assert_("Hanging Leg Raise" not in names(d, "Lower B") and "Leverage Squat" in names(d, "Lower B"), names(d, "Lower B"))
     assert_(len(d["sets"]) == len(EXPORT["sets"]) and len(d["runs"]) == len(EXPORT["runs"]), "history kept")
     assert_(d["notes"] == pg.evaluate("n=>migrate({sets:n.sets,body:[],runs:[],notes:n.notes}).notes", EXPORT), "notes kept")
@@ -63,7 +63,7 @@ def test_custom_plan_without_old_exercises_is_left_alone(br):
     plan = {o: [{"n": "My Lift", "s": "3 x 10", "t": 20, "u": "kg", "tip": ""}] for o in ["Upper A", "Lower A", "Upper B", "Lower B"]}
     ctx, pg = page_with(br, base_db(order=["Upper A", "Lower A", "Upper B", "Lower B"], plan=plan))
     d = db(pg)
-    assert_(d["order"][0] == "Upper A" and names(d, "Lower B") == ["My Lift"] and d["pv"] == 24, d["order"])
+    assert_(d["order"][0] == "Upper A" and names(d, "Lower B") == ["My Lift"] and d["pv"] == 25, d["order"])
 
 
 def test_extra_session_is_kept_after_migration(br):
@@ -76,8 +76,8 @@ def test_extra_session_is_kept_after_migration(br):
 
 def test_version_is_v23(br):
     ctx, pg = page_with(br, base_db())
-    assert_("liftlog-v29" in (APP / "sw.js").read_text(), "sw")
-    assert_("Stride · v29" in (APP / "index.html").read_text(), "footer")
+    assert_("liftlog-v31" in (APP / "sw.js").read_text(), "sw")
+    assert_("Stride · v31" in (APP / "index.html").read_text(), "footer")
 
 
 def test_v24_ranges_migrate_only_if_unedited(br):
@@ -88,7 +88,7 @@ def test_v24_ranges_migrate_only_if_unedited(br):
     data["plan"]["Upper A"] = [{"n": "Wrist Curl", "s": "3 x 10", "t": 5, "u": "kg", "tip": ""}]
     ctx, pg = page_with(br, data)
     d = db(pg)
-    assert_(d["plan"]["Lower A"][0]["s"] == "4 x 12-20" and d["plan"]["Upper A"][0]["s"] == "3 x 10" and d["pv"] == 24, d["plan"])
+    assert_(d["plan"]["Lower A"][0]["s"] == "4 x 12-20" and d["plan"]["Upper A"][0]["s"] == "3 x 10" and d["pv"] == 25, d["plan"])
 
 
 def test_csv_exports_exercise_notes(br):
@@ -151,6 +151,33 @@ def test_v29_cloud_is_worker_and_sw_skips_cross_origin(br):
     assert_("const CLOUD='https://stride-coach.lokis-space.workers.dev'" in html, "CLOUD url")
     assert_("origin!==location.origin)return" in sw, "sw must ignore cross-origin requests")
     assert_(not (APP / "netlify").exists() and not (APP / "package.json").exists(), "netlify files left")
+
+
+def test_v30_no_ai_tip_and_reverse_fly_migrates(br):
+    html = (APP / "index.html").read_text()
+    assert_("tipCard" not in html and "cloudSession" not in html and "aitip" not in html, "AI tip code left")
+    db = base_db(); db["pv"] = 24
+    db["plan"]["Upper B"] = [{"n": "DB Rear Delt Raise", "s": "2 x 15-25", "t": 5, "u": "kg", "st": 5, "tip": ""}]
+    ctx, pg = page_with(br, db)
+    r = pg.evaluate("[DB.pv, DB.plan['Upper B'].map(x=>x.n+'|'+x.s).join()]")
+    assert_(r[0] == 25 and r[1] == "Reverse Fly|2 x 15-20", r)
+    assert_(pg.evaluate("freshDB().plan['Upper B'].some(x=>x.n==='Reverse Fly')"), "fresh plan")
+
+
+def test_v31_rest_pill_week_dots_finish_time(br):
+    ctx, pg = page_with(br, base_db())
+    assert_(pg.evaluate("$('#rest').hidden"), "pill hidden with no sets")
+    pg.evaluate("()=>{SES=ORDER[0];const t=Date.now()-130000;DB.sets.push({id:'s'+t,d:gymDate(),ses:SES,ex:'Hack Squat',kg:25,r:10,note:'',w:false});save();render()}")
+    pg.wait_for_timeout(300)
+    r = pg.evaluate("[$('#rest').hidden,$('#rest').textContent,$('#rest').classList.contains('over')]")
+    assert_(r[0] is False and r[1].startswith("Rest 2:") and r[2], r)
+    dots = pg.evaluate("[...document.querySelectorAll('.wkline i')].map(i=>i.className)")
+    assert_(len(dots) == 5 and dots[0] == "on", dots)
+    pg.evaluate("()=>{const t=Date.now()-60000;DB.sets.push({id:'s'+t,d:gymDate(),ses:SES,ex:'Hack Squat',kg:25,r:10,note:'',w:false});save();finish()}")
+    assert_(" min · next " in pg.evaluate("$('#toast').textContent"), pg.evaluate("$('#toast').textContent"))
+    assert_(pg.evaluate("$('#rest').hidden"), "pill hidden after finish")
+    pg.evaluate("go('history')")
+    assert_(pg.evaluate("$('#rest').hidden"), "pill hidden on other tabs")
 
 
 def main():
