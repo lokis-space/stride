@@ -41,11 +41,11 @@ Date, km, time (mm:ss), optional avg HR (40-230) and notes. Tap a run to edit it
 
 ## Backup
 
-Use **Save → Export backup** weekly or whenever the Save tab has a red dot. Imports default to merge and keep `liftlog.prev` so a restore can be undone.
+Fully offline (v32+), no cloud. Use **Save → Export backup** (saves `stride-DATE.json`, store it in iCloud Drive › Gym Plan) weekly or whenever the Save tab has a red dot. Imports default to merge and keep `liftlog.prev` so a restore can be undone.
 
 ## Offline
 
-`sw.js` uses cache `liftlog-v27`, network-first with a 2.5 s timeout for the app shell, cache-first for fonts, icons and the manifest, and deletes old caches on activate.
+`sw.js` uses cache `liftlog-v32`, network-first with a 2.5 s timeout for the app shell, cache-first for fonts, icons and the manifest, and deletes old caches on activate.
 
 ## Local test
 
@@ -70,12 +70,3 @@ After the legacy suite, `run.sh` runs `test_v16.py` (v16 to v19 regressions), `t
 ## Changelog
 
 Version history is in `CHANGELOG.md`.
-
-## Cloud backup (v29+)
-Backend is a Cloudflare Worker (free tier) in a separate folder, `~/Downloads/stride-worker`, not in this site.
-1. `npx wrangler login`, then `npx wrangler kv namespace create STRIDE` and put the id in `wrangler.toml`.
-2. Secrets (never printed or committed):
-   - `printf %s "<passcode>" | npx wrangler secret put STRIDE_TOKEN` (8+ chars, saved in 1Password as "Stride passcode")
-3. `npx wrangler deploy`. URL: `https://stride-coach.lokis-space.workers.dev` (set as `CLOUD` in index.html).
-4. In the app: Save › Cloud › paste the passcode › Save passcode.
-Finish a session to back up. Restore from cloud pulls the latest copy. Only `https://lokis-space.github.io` is allowed by CORS.

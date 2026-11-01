@@ -2,6 +2,12 @@
 
 Newest first. Each version is one commit on `main` (v20 onward). `sw.js` cache name and the footer always carry the same version.
 
+## v32
+- Removed cloud backup and passcode. App is fully offline.
+- Export files now named stride-DATE.json (old liftlog files still import).
+- Clearer Save tab backup note. Dropped stale "Phase 2" label.
+- Clears old cloud keys from the phone.
+
 ## v31 (31 Oct 2026) - Rest pill, week dots, session time
 - Rest pill: floating `Rest m:ss` above the nav, counts UP from the last logged set (no countdown, so extra rest shows). Red from 2:00. Hidden with no sets, after Finish, on other tabs, or after 30 min.
 - Week dots under the Workout header: one dot per session done this week (Mon start) + a Run dot.
